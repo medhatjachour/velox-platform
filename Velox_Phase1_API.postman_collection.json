@@ -1,0 +1,513 @@
+{
+  "info": {
+    "name": "Velox Platform - Phase 1 API",
+    "description": "Complete API collection for testing Phase 1 endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "YOUR_CLERK_TOKEN",
+      "type": "string"
+    },
+    {
+      "key": "portfolioId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "shortCode",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscriptionTier\": \"pro\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Upgrade Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tier\": \"premium\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/upgrade",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me", "upgrade"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Portfolio",
+      "item": [
+        {
+          "name": "List Portfolios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolios",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolios"]
+            }
+          }
+        },
+        {
+          "name": "Create Portfolio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('portfolioId', response.portfolio.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"john-doe\",\n  \"title\": \"John Doe - Full Stack Developer\",\n  \"bio\": \"Experienced developer with 5+ years in web development\",\n  \"headline\": \"Full Stack Developer | React | Node.js\",\n  \"theme\": \"default\",\n  \"contactInfo\": {\n    \"email\": \"john@example.com\",\n    \"phone\": \"+1234567890\"\n  },\n  \"socialLinks\": {\n    \"github\": \"https://github.com/johndoe\",\n    \"linkedin\": \"https://linkedin.com/in/johndoe\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolios",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolios"]
+            }
+          }
+        },
+        {
+          "name": "Get Portfolio by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolios/{{portfolioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolios", "{{portfolioId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Portfolio",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Portfolio Title\",\n  \"bio\": \"Updated bio with new information\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolios/{{portfolioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolios", "{{portfolioId}}"]
+            }
+          }
+        },
+        {
+          "name": "Publish Portfolio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolios/{{portfolioId}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolios", "{{portfolioId}}", "publish"]
+            }
+          }
+        },
+        {
+          "name": "Delete Portfolio",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolios/{{portfolioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolios", "{{portfolioId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Generation",
+      "item": [
+        {
+          "name": "Generate Bio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"bio\",\n  \"input\": {\n    \"text\": \"Senior full-stack developer with expertise in React, Node.js, and cloud architecture. Built scalable systems for Fortune 500 companies.\",\n    \"tone\": \"professional\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolios/{{portfolioId}}/ai-generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolios", "{{portfolioId}}", "ai-generate"]
+            }
+          }
+        },
+        {
+          "name": "Generate Headline",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"headline\",\n  \"input\": {\n    \"bio\": \"Senior full-stack developer with 10+ years experience in building scalable web applications\",\n    \"skills\": [\"React\", \"Node.js\", \"TypeScript\", \"AWS\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolios/{{portfolioId}}/ai-generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolios", "{{portfolioId}}", "ai-generate"]
+            }
+          }
+        },
+        {
+          "name": "Parse Resume",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"resume-parse\",\n  \"input\": {\n    \"resumeText\": \"JOHN DOE\\nSenior Software Engineer\\nemail: john@example.com\\nphone: +1234567890\\n\\nEXPERIENCE:\\nSenior Developer at Tech Corp (2020-2024)\\n- Led team of 5 developers\\n- Built microservices architecture\\n- Increased system performance by 40%\\n\\nSoftware Engineer at StartupXYZ (2018-2020)\\n- Developed React applications\\n- Implemented CI/CD pipelines\\n\\nSKILLS:\\nReact, Node.js, Python, AWS, Docker, Kubernetes\\n\\nEDUCATION:\\nBS Computer Science, MIT (2014-2018)\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolios/{{portfolioId}}/ai-generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolios", "{{portfolioId}}", "ai-generate"]
+            }
+          }
+        },
+        {
+          "name": "Generate Project Description",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"project-description\",\n  \"input\": {\n    \"projectName\": \"E-commerce Platform\",\n    \"technologies\": [\"React\", \"Node.js\", \"PostgreSQL\", \"Stripe\", \"AWS\"],\n    \"brief\": \"Built a full-featured online store with payment processing, inventory management, and admin dashboard\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolios/{{portfolioId}}/ai-generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolios", "{{portfolioId}}", "ai-generate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "NFC",
+      "item": [
+        {
+          "name": "List NFC Cards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nfc/cards",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "nfc", "cards"]
+            }
+          }
+        },
+        {
+          "name": "Create NFC Card",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('shortCode', response.card.shortCode);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"{{portfolioId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/nfc/cards",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "nfc", "cards"]
+            }
+          }
+        },
+        {
+          "name": "Simulate NFC Tap",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nfc/tap/{{shortCode}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "nfc", "tap", "{{shortCode}}"]
+            }
+          }
+        },
+        {
+          "name": "Capture Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shortCode\": \"{{shortCode}}\",\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane@example.com\",\n  \"phone\": \"+1234567890\",\n  \"company\": \"Tech Startup Inc\",\n  \"message\": \"Interested in collaboration opportunities\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/nfc/leads",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "nfc", "leads"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Get Portfolio Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/portfolios/{{portfolioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "portfolios", "{{portfolioId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Portfolio Analytics (Date Range)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/portfolios/{{portfolioId}}?startDate=2025-01-01&endDate=2025-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "portfolios", "{{portfolioId}}"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
