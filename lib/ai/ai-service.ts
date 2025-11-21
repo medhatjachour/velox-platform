@@ -20,6 +20,12 @@ export interface AIResponse {
 
 export class AIService {
   private defaultModel = 'llama-3.3-70b-versatile'
+  private maxRetries = 2
+  private retryDelay = 1000 // 1 second
+
+  private async delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
 
   async generate(options: AIGenerationOptions): Promise<AIResponse> {
     const {
@@ -29,31 +35,67 @@ export class AIService {
       model = this.defaultModel,
     } = options
 
-    try {
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        model,
-        temperature,
-        max_tokens: maxTokens,
-      })
+    let lastError: Error | null = null
 
-      const message = completion.choices[0]?.message
-      const usage = completion.usage
+    // Retry logic for network errors
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        const completion = await groq.chat.completions.create({
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          model,
+          temperature,
+          max_tokens: maxTokens,
+        })
 
-      return {
-        content: message?.content || '',
-        model,
-        tokensUsed: usage?.total_tokens || 0,
-        finishReason: completion.choices[0]?.finish_reason || 'stop',
+        const message = completion.choices[0]?.message
+        const usage = completion.usage
+
+        return {
+          content: message?.content || '',
+          model,
+          tokensUsed: usage?.total_tokens || 0,
+          finishReason: completion.choices[0]?.finish_reason || 'stop',
+        }
+      } catch (error) {
+        lastError = error as Error
+        console.error(`AI generation error (attempt ${attempt + 1}/${this.maxRetries + 1}):`, error)
+
+        // Check if it's a network/timeout error
+        const err = error as { code?: string; message?: string }
+        const isNetworkError = 
+          err.code === 'ETIMEDOUT' || 
+          err.code === 'ECONNREFUSED' ||
+          err.code === 'ENOTFOUND' ||
+          err.message?.includes('timeout') ||
+          err.message?.includes('Connection error')
+
+        // Retry only on network errors and if we have attempts left
+        if (isNetworkError && attempt < this.maxRetries) {
+          console.log(`Retrying in ${this.retryDelay}ms...`)
+          await this.delay(this.retryDelay)
+          continue
+        }
+
+        // Don't retry on other errors (API key, rate limit, etc.)
+        break
       }
-    } catch (error) {
-      console.error('AI generation error:', error)
-      throw new Error('Failed to generate AI content')
+    }
+
+    // If we get here, all retries failed
+    const errorMessage = lastError?.message || 'Unknown error'
+    if (errorMessage.includes('timeout') || errorMessage.includes('Connection error')) {
+      throw new Error('AI service is temporarily unavailable. Please check your internet connection and try again.')
+    } else if (errorMessage.includes('API key')) {
+      throw new Error('AI service configuration error. Please contact support.')
+    } else if (errorMessage.includes('rate limit')) {
+      throw new Error('AI service rate limit reached. Please try again in a moment.')
+    } else {
+      throw new Error('Failed to generate AI content. Please try again.')
     }
   }
 
