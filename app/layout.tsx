@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   description: "AI-powered portfolios meets NFC technology. One card, infinite possibilities.",
 };
 
+// Force dynamic rendering to check auth status on every request
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: Readonly<{
