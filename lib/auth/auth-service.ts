@@ -46,22 +46,23 @@ export const authService = {
     // Hash password
     const hashedPassword = await hashPassword(password)
 
+    // Combine first and last name into fullName
+    const fullName = [firstName, lastName].filter(Boolean).join(' ') || null
+
     // Create user
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         username,
-        firstName,
-        lastName,
+        fullName,
         role: UserRole.USER, // Default role
       },
       select: {
         id: true,
         email: true,
         username: true,
-        firstName: true,
-        lastName: true,
+        fullName: true,
         role: true,
         createdAt: true,
       },
@@ -102,8 +103,7 @@ export const authService = {
         id: user.id,
         email: user.email,
         username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        fullName: user.fullName,
         role: user.role,
       },
       token,
@@ -131,8 +131,7 @@ export const authService = {
       id: session.user.id,
       email: session.user.email,
       username: session.user.username,
-      firstName: session.user.firstName,
-      lastName: session.user.lastName,
+      fullName: session.user.fullName,
       role: session.user.role,
       avatarUrl: session.user.avatarUrl,
     }

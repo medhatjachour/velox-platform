@@ -300,7 +300,6 @@ export default function DashboardPage() {
             </div>
           </Card>
         </motion.div>
-      </div>
     </div>
   );
 }

@@ -1,13 +1,17 @@
 "use client";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Brain, Sparkles, CheckCircle2, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Upload, Brain, Sparkles, CheckCircle2, ArrowRight, ArrowLeft, Loader2, AlertCircle, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [existingUser, setExistingUser] = useState<any>(null);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -17,6 +21,38 @@ export default function OnboardingPage() {
     resumeFile: null as File | null,
   });
 
+  const checkEmailExists = async (email: string) => {
+    if (!email || !email.includes("@")) return;
+    
+    setCheckingEmail(true);
+    setError("");
+    setExistingUser(null);
+
+    try {
+      const response = await fetch("/api/auth/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (data.exists) {
+        setExistingUser(data.user);
+      }
+    } catch (err) {
+      console.error("Error checking email:", err);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
+
+  const handleEmailBlur = () => {
+    if (formData.email) {
+      checkEmailExists(formData.email);
+    }
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -25,13 +61,44 @@ export default function OnboardingPage() {
     }
   };
 
+  const handleContinue = async () => {
+    // Check email one more time before proceeding
+    if (existingUser) {
+      setError("This email is already registered. Please sign in instead.");
+      return;
+    }
+
+    setStep(2);
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
-    // TODO: Implement registration logic
-    setTimeout(() => {
-      setLoading(false);
+    setError("");
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          username: formData.username,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
+
       setStep(4);
-    }, 2000);
+    } catch (err: any) {
+      setError(err.message || "An error occurred during registration");
+      setLoading(false);
+    }
   };
 
   return (
@@ -133,13 +200,51 @@ export default function OnboardingPage() {
 
                   <div>
                     <label className="text-sm font-medium mb-2 block">Email</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-[#06B6D4]"
-                      placeholder="john@example.com"
-                    />
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value });
+                          setExistingUser(null);
+                          setError("");
+                        }}
+                        onBlur={handleEmailBlur}
+                        className={`w-full px-4 py-3 rounded-xl border ${
+                          existingUser ? "border-amber-500" : "border-border"
+                        } bg-card focus:outline-none focus:ring-2 focus:ring-[#06B6D4]`}
+                        placeholder="john@example.com"
+                      />
+                      {checkingEmail && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Loader2 className="w-4 h-4 animate-spin text-[#06B6D4]" />
+                        </div>
+                      )}
+                    </div>
+                    {existingUser && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start gap-2"
+                      >
+                        <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                            This email is already registered
+                          </p>
+                          <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-1">
+                            Account created on {new Date(existingUser.createdAt).toLocaleDateString()}
+                          </p>
+                          <Link
+                            href="/auth/login"
+                            className="inline-flex items-center gap-2 text-sm font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 mt-2"
+                          >
+                            <LogIn className="w-4 h-4" />
+                            Sign in instead
+                          </Link>
+                        </div>
+                      </motion.div>
+                    )}
                   </div>
 
                   <div>
@@ -156,20 +261,40 @@ export default function OnboardingPage() {
                     </p>
                   </div>
 
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-2"
+                    >
+                      <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                      <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                    </motion.div>
+                  )}
+
                   <Button
-                    onClick={() => setStep(2)}
-                    disabled={!formData.email || !formData.password || !formData.username}
-                    className="w-full py-6 text-lg font-bold rounded-xl bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] hover:shadow-2xl transition-all"
+                    onClick={handleContinue}
+                    disabled={!formData.email || !formData.password || !formData.username || !!existingUser || checkingEmail}
+                    className="w-full py-6 text-lg font-bold rounded-xl bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Continue
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                    {checkingEmail ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        Continue
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </>
+                    )}
                   </Button>
 
                   <p className="text-center text-sm text-muted-foreground">
                     Already have an account?{" "}
-                    <a href="/auth/login" className="text-[#06B6D4] font-semibold hover:underline">
+                    <Link href="/auth/login" className="text-[#06B6D4] font-semibold hover:underline">
                       Sign in
-                    </a>
+                    </Link>
                   </p>
                 </div>
               </Card>
