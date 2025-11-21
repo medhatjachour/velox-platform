@@ -1,0 +1,340 @@
+// Velox Platform Database Schema
+// Clean Architecture with RBAC
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRole {
+  GUEST
+  USER
+  TEAM_MEMBER
+  TEAM_LEADER
+  SUPER_ADMIN
+}
+
+enum SubscriptionTier {
+  FREE
+  PRO
+  TEAM
+  ENTERPRISE
+}
+
+enum NFCCardStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// ============================================================================
+// USER & AUTH
+// ============================================================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // bcrypt hashed
+  username  String   @unique
+  fullName  String?
+  avatarUrl String?
+  role      UserRole @default(USER)
+  
+  // Subscription
+  subscriptionTier SubscriptionTier @default(FREE)
+  subscriptionEndsAt DateTime?
+  
+  // Metadata
+  emailVerified Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  sessions     Session[]
+  portfolios   Portfolio[]
+  nfcCards     NFCCard[]
+  orders       Order[]
+  teamMembers  TeamMember[]
+  ownedTeams   Team[]       @relation("TeamOwner")
+  
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// ============================================================================
+// TEAMS & PERMISSIONS
+// ============================================================================
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  logoUrl     String?
+  
+  ownerId String
+  owner   User   @relation("TeamOwner", fields: [ownerId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  members    TeamMember[]
+  portfolios Portfolio[]
+  
+  @@map("teams")
+}
+
+model TeamMember {
+  id     String   @id @default(uuid())
+  userId String
+  teamId String
+  role   UserRole @default(TEAM_MEMBER)
+  
+  joinedAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, teamId])
+  @@map("team_members")
+}
+
+// ============================================================================
+// PORTFOLIOS
+// ============================================================================
+
+model Portfolio {
+  id       String  @id @default(uuid())
+  userId   String
+  teamId   String?
+  slug     String  @unique
+  title    String
+  bio      String?
+  headline String?
+  
+  // Customization
+  theme         Json?
+  customDomain  String?
+  heroImageUrl  String?
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  
+  // Status
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  
+  // Analytics
+  viewCount Int @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team     Team?         @relation(fields: [teamId], references: [id])
+  projects Project[]
+  views    PortfolioView[]
+  leads    Lead[]
+  
+  @@map("portfolios")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  portfolioId String
+  title       String
+  description String
+  imageUrl    String?
+  url         String?
+  technologies String[]
+  featured    Boolean  @default(false)
+  order       Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  @@map("projects")
+}
+
+model PortfolioView {
+  id          String   @id @default(uuid())
+  portfolioId String
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+  country     String?
+  viewedAt    DateTime @default(now())
+  
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  @@map("portfolio_views")
+}
+
+// ============================================================================
+// NFC CARDS
+// ============================================================================
+
+model NFCCard {
+  id        String        @id @default(uuid())
+  userId    String
+  cardUid   String        @unique
+  shortCode String        @unique
+  name      String
+  status    NFCCardStatus @default(PENDING)
+  
+  // Linked portfolio
+  portfolioSlug String?
+  
+  // Customization
+  design      Json?
+  printedData Json?
+  
+  // Tracking
+  activatedAt DateTime?
+  expiresAt   DateTime?
+  tapCount    Int       @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("nfc_cards")
+}
+
+// ============================================================================
+// E-COMMERCE
+// ============================================================================
+
+model Product {
+  id          String  @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  currency    String  @default("USD")
+  imageUrl    String?
+  features    Json?
+  inStock     Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  orderItems OrderItem[]
+  
+  @@map("products")
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  userId      String
+  orderNumber String      @unique
+  status      OrderStatus @default(PENDING)
+  
+  // Pricing
+  subtotal     Float
+  tax          Float
+  shipping     Float
+  total        Float
+  currency     String @default("USD")
+  
+  // Shipping
+  shippingAddress Json
+  trackingNumber  String?
+  
+  // Payment
+  paymentMethod   String?
+  paymentIntentId String?
+  paidAt          DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+  
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+  
+  @@map("order_items")
+}
+
+// ============================================================================
+// LEADS & CRM
+// ============================================================================
+
+model Lead {
+  id          String  @id @default(uuid())
+  portfolioId String
+  name        String
+  email       String
+  phone       String?
+  company     String?
+  message     String?
+  source      String?
+  
+  createdAt DateTime @default(now())
+  
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  @@map("leads")
+}
+
+// ============================================================================
+// AI GENERATIONS
+// ============================================================================
+
+model AIGeneration {
+  id      String @id @default(uuid())
+  userId  String
+  type    String // 'bio', 'headline', 'project-description', etc.
+  prompt  String
+  response String
+  model   String // 'groq-llama3', etc.
+  tokensUsed Int?
+  
+  createdAt DateTime @default(now())
+  
+  @@map("ai_generations")
+}
