@@ -6,11 +6,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { PortfolioService } from '@/lib/services';
+import { PortfolioService, UserService } from '@/lib/services';
 import { CreatePortfolioDTO } from '@/types';
 import { ValidationError, NotFoundError } from '@/lib/errors';
 
 const portfolioService = new PortfolioService();
+const userService = new UserService();
 
 /**
  * GET /api/portfolios
@@ -27,7 +28,10 @@ export async function GET() {
       );
     }
 
-    const portfolios = await portfolioService.getUserPortfolios(userId);
+    // Ensure user exists in database (sync from Clerk)
+    const user = await userService.ensureUserExists(userId);
+
+    const portfolios = await portfolioService.getUserPortfolios(user.id);
     
     return NextResponse.json({ portfolios });
   } catch (error) {
@@ -62,22 +66,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ensure user exists in database (sync from Clerk)
+    const user = await userService.ensureUserExists(userId);
+
     const body = await request.json();
     
     const portfolioData: CreatePortfolioDTO = {
-      userId,
+      userId: user.id,
       slug: body.slug,
       title: body.title,
       bio: body.bio,
       headline: body.headline,
-      avatarUrl: body.avatarUrl,
-      theme: body.theme || 'default',
-      customColors: body.customColors,
-      contactInfo: body.contactInfo,
-      socialLinks: body.socialLinks,
+      heroImageUrl: body.heroImageUrl,
+      theme: body.theme,
+      sections: body.sections,
     };
 
-    const portfolio = await portfolioService.createPortfolio(portfolioData);
+    const portfolio = await portfolioService.createPortfolio(user.id, portfolioData);
     
     return NextResponse.json({ portfolio }, { status: 201 });
   } catch (error) {

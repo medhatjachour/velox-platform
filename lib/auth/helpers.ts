@@ -134,9 +134,9 @@ export function getFeatureAccess(tier: SubscriptionTier): FeatureAccess {
       canAccessAnalytics: false,
       canRemoveBranding: false,
       canUseCRMIntegration: false,
-      maxPortfolios: 1,
-      maxNfcCards: 1,
-      maxLeadsPerMonth: 10,
+      maxPortfolios: 3,
+      maxNfcCards: 2,
+      maxLeadsPerMonth: 50,
     },
     PRO: {
       canUseAI: true, // Advanced AI
