@@ -92,13 +92,10 @@ export default function PortfolioEditorPage() {
     });
   };
 
-  // Mock user for preview
-  const user = { email: "john@example.com" };
-
   return (
     <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] bg-clip-text text-transparent">
               Portfolio Editor ✨
@@ -404,6 +401,5 @@ export default function PortfolioEditorPage() {
           )}
         </AnimatePresence>
       </div>
-    </div>
   );
 }
