@@ -14,8 +14,6 @@ export interface RegisterInput {
 export interface LoginInput {
   email: string
   password: string
-  ipAddress?: string
-  userAgent?: string
 }
 
 export class AuthError extends Error {
@@ -72,7 +70,7 @@ export const authService = {
   },
 
   async login(input: LoginInput) {
-    const { email, password, ipAddress, userAgent } = input
+    const { email, password } = input
 
     // Find user by email
     const user = await prisma.user.findUnique({
@@ -94,8 +92,6 @@ export const authService = {
       userId: user.id,
       email: user.email,
       role: user.role,
-      ipAddress,
-      userAgent,
     })
 
     return {

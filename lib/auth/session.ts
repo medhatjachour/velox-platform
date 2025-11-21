@@ -5,12 +5,10 @@ export interface CreateSessionOptions {
   userId: string
   email: string
   role: string
-  ipAddress?: string
-  userAgent?: string
 }
 
 export async function createSession(options: CreateSessionOptions) {
-  const { userId, email, role, ipAddress, userAgent } = options
+  const { userId, email, role } = options
 
   // Generate token
   const token = signToken({ userId, email, role })
@@ -25,8 +23,6 @@ export async function createSession(options: CreateSessionOptions) {
       userId,
       token,
       expiresAt,
-      ipAddress,
-      userAgent,
     },
   })
 

@@ -14,18 +14,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get IP address and user agent
-    const ipAddress = request.headers.get('x-forwarded-for') || 
-                     request.headers.get('x-real-ip') || 
-                     'unknown'
-    const userAgent = request.headers.get('user-agent') || 'unknown'
-
     // Login user
     const result = await authService.login({
       email,
       password,
-      ipAddress,
-      userAgent,
     })
 
     // Create response with token in cookie
