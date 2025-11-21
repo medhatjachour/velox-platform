@@ -12,14 +12,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 
 export default function DashboardPage() {
-  // Mock user data - in real app, get from auth
+  // User data is now provided by layout
   const user = {
     name: "John Doe",
     email: "john@example.com",
-    role: "USER",
   };
 
   const stats = [
@@ -96,8 +94,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <DashboardLayout user={user}>
-      <div className="space-y-8">
+    <div className="space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -304,6 +301,6 @@ export default function DashboardPage() {
           </Card>
         </motion.div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

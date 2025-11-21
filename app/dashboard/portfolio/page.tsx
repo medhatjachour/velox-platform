@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 
 export default function PortfolioEditorPage() {
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
@@ -93,9 +92,11 @@ export default function PortfolioEditorPage() {
     });
   };
 
+  // Mock user for preview
+  const user = { email: "john@example.com" };
+
   return (
-    <DashboardLayout user={user}>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -403,6 +404,6 @@ export default function PortfolioEditorPage() {
           )}
         </AnimatePresence>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
