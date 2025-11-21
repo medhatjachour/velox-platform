@@ -6,9 +6,9 @@ import PortfolioView from "@/components/portfolio/PortfolioView";
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 async function getPortfolio(slug: string) {
@@ -67,7 +67,7 @@ async function trackView(portfolioId: string, request: any) {
 }
 
 export default async function PublicPortfolioPage({ params }: PageProps) {
-  const { slug } = params;
+  const { slug } = await params;
   
   const portfolio = await getPortfolio(slug);
 
@@ -84,7 +84,7 @@ export default async function PublicPortfolioPage({ params }: PageProps) {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: PageProps) {
-  const { slug } = params;
+  const { slug } = await params;
   const portfolio = await getPortfolio(slug);
 
   if (!portfolio) {

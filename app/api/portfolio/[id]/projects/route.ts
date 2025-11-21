@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/get-current-user";
 // POST /api/portfolio/[id]/projects - Add project to portfolio
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -17,7 +17,7 @@ export async function POST(
       );
     }
 
-    const { id: portfolioId } = params;
+    const { id: portfolioId } = await params;
     const body = await request.json();
     const { title, description, imageUrl, url, technologies, featured } = body;
 
@@ -73,10 +73,10 @@ export async function POST(
 // GET /api/portfolio/[id]/projects - Get all projects for portfolio
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: portfolioId } = params;
+    const { id: portfolioId } = await params;
 
     const projects = await prisma.project.findMany({
       where: { portfolioId },

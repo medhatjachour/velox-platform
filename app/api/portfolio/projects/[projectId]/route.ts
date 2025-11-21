@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/get-current-user";
 // PUT /api/portfolio/projects/[projectId] - Update project
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -17,7 +17,7 @@ export async function PUT(
       );
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
     const body = await request.json();
     const { title, description, imageUrl, url, technologies, featured, order } = body;
 
@@ -70,7 +70,7 @@ export async function PUT(
 // DELETE /api/portfolio/projects/[projectId] - Delete project
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -82,7 +82,7 @@ export async function DELETE(
       );
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
 
     // Get project and verify ownership through portfolio
     const project = await prisma.project.findUnique({
