@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
-import Sidebar from "@/components/dashboard/Sidebar";
+import SidebarNew from "@/components/dashboard/SidebarNew";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -38,7 +38,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
         />
       </div>
 
-      <Sidebar user={user} />
+      <SidebarNew user={user} />
       
       <main className="lg:ml-[280px] min-h-screen">
         <div className="p-6 md:p-8 lg:p-12">
