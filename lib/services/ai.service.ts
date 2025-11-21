@@ -1,11 +1,12 @@
 /**
  * AI Service
  * 
- * Handles all AI-related operations using OpenAI.
+ * Handles all AI-related operations using Google Gemini or OpenAI.
  * Includes resume parsing, content generation, and prompt management.
  */
 
 import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { 
   ResumeParseResult, 
   AIGenerationRequest,
@@ -15,10 +16,18 @@ import {
 import { ExternalServiceError, ValidationError, AIRateLimitError } from '@/lib/errors';
 import { db, aiGenerations } from '@/db';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize AI clients
+const geminiApiKey = process.env.GEMINI_API_KEY;
+const openaiApiKey = process.env.OPENAI_API_KEY;
+
+// Prefer Gemini if available, fallback to OpenAI
+const useGemini = !!geminiApiKey;
+
+const gemini = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
+const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
+
+// Mock mode flag for development when quota is exceeded
+const USE_MOCK_AI = process.env.USE_MOCK_AI === 'true';
 
 export interface IAIService {
   parseResume(resumeText: string): Promise<ResumeParseResult>;
@@ -101,36 +110,74 @@ export class AIService implements IAIService {
     input: string,
     tone: 'professional' | 'casual' | 'creative' = 'professional'
   ): Promise<string> {
+    // Mock response for development when quota exceeded
+    if (USE_MOCK_AI) {
+      const mockBios = {
+        professional: `A seasoned professional with extensive experience in technology and innovation. Known for delivering high-impact solutions and driving organizational success through strategic thinking and technical expertise.\n\nWith a proven track record of leading cross-functional teams and implementing cutting-edge solutions, I bring a unique blend of technical proficiency and business acumen to every project. Passionate about leveraging technology to solve complex challenges and create meaningful impact.`,
+        casual: `Hey there! I'm a tech enthusiast who loves building cool stuff and solving problems. When I'm not coding, you'll find me exploring new technologies or collaborating with awesome teams.\n\nI believe in making technology accessible and fun. My approach is all about creativity, innovation, and making a real difference through the work I do.`,
+        creative: `An innovative thinker and digital craftsperson who transforms ideas into reality through code and creativity. My journey is a tapestry of technological adventures and breakthrough moments.\n\nI thrive at the intersection of art and technology, where imagination meets implementation. Every project is an opportunity to push boundaries and create something extraordinary that resonates with users and drives meaningful change.`,
+      };
+      return mockBios[tone];
+    }
+
     const prompt = this.getBioPrompt(input, tone);
     
     try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert copywriter specializing in professional bios. Write compelling, ${tone} bios that highlight achievements and expertise.`,
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 500,
-      });
-
-      const bio = response.choices[0]?.message?.content?.trim();
-      if (!bio) {
-        throw new ExternalServiceError('OpenAI', 'Failed to generate bio');
+      // Use Gemini if available
+      if (gemini) {
+        const model = gemini.getGenerativeModel({ 
+          model: 'gemini-2.5-flash',
+        });
+        
+        const fullPrompt = `You are an expert copywriter specializing in professional bios. Write compelling, ${tone} bios that highlight achievements and expertise.\n\n${prompt}`;
+        
+        const result = await model.generateContent({
+          contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+        });
+        
+        const response = await result.response;
+        const bio = response.text().trim();
+        
+        if (!bio) {
+          throw new ExternalServiceError('Gemini', 'Failed to generate bio');
+        }
+        
+        return bio;
       }
+      
+      // Fallback to OpenAI
+      if (openai) {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an expert copywriter specializing in professional bios. Write compelling, ${tone} bios that highlight achievements and expertise.`,
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 500,
+        });
 
-      return bio;
+        const bio = response.choices[0]?.message?.content?.trim();
+        if (!bio) {
+          throw new ExternalServiceError('OpenAI', 'Failed to generate bio');
+        }
+
+        return bio;
+      }
+      
+      throw new ExternalServiceError('AI', 'No AI provider configured');
     } catch (error) {
+      console.error('AI generateBio error:', error);
       if (error instanceof Error && error.message.includes('rate_limit')) {
         throw new AIRateLimitError();
       }
-      throw new ExternalServiceError('OpenAI', 'Failed to generate bio');
+      throw new ExternalServiceError('AI', `Failed to generate bio: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -138,6 +185,18 @@ export class AIService implements IAIService {
    * Generate a catchy headline
    */
   async generateHeadline(bio: string, skills: string[]): Promise<string> {
+    // Mock response for development when quota exceeded
+    if (USE_MOCK_AI) {
+      const mockHeadlines = [
+        'Innovative Tech Leader & Problem Solver',
+        'Full-Stack Developer | Digital Innovator',
+        'Creative Technologist Building Tomorrow',
+        'Software Engineer | AI Enthusiast',
+        'Product Designer & UX Architect',
+      ];
+      return mockHeadlines[Math.floor(Math.random() * mockHeadlines.length)];
+    }
+
     const prompt = `Based on this bio and skills, create a catchy, concise professional headline (max 60 characters):
 
 Bio: ${bio}
@@ -146,34 +205,62 @@ Skills: ${skills.join(', ')}
 Return only the headline, no quotes or extra text.`;
 
     try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert at crafting compelling professional headlines. Keep them concise and impactful.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.8,
-        max_tokens: 100,
-      });
-
-      const headline = response.choices[0]?.message?.content?.trim();
-      if (!headline) {
-        throw new ExternalServiceError('OpenAI', 'Failed to generate headline');
+      // Use Gemini if available
+      if (gemini) {
+        const model = gemini.getGenerativeModel({ 
+          model: 'gemini-2.5-flash',
+        });
+        
+        const fullPrompt = `You are an expert at crafting compelling professional headlines. Keep them concise and impactful.\n\n${prompt}`;
+        
+        const result = await model.generateContent({
+          contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+        });
+        
+        const response = await result.response;
+        const headline = response.text().trim();
+        
+        if (!headline) {
+          throw new ExternalServiceError('Gemini', 'Failed to generate headline');
+        }
+        
+        // Ensure it's not too long
+        return headline.length > 60 ? headline.substring(0, 57) + '...' : headline;
       }
+      
+      // Fallback to OpenAI
+      if (openai) {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert at crafting compelling professional headlines. Keep them concise and impactful.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.8,
+          max_tokens: 100,
+        });
 
-      // Ensure it's not too long
-      return headline.length > 60 ? headline.substring(0, 57) + '...' : headline;
+        const headline = response.choices[0]?.message?.content?.trim();
+        if (!headline) {
+          throw new ExternalServiceError('OpenAI', 'Failed to generate headline');
+        }
+
+        // Ensure it's not too long
+        return headline.length > 60 ? headline.substring(0, 57) + '...' : headline;
+      }
+      
+      throw new ExternalServiceError('AI', 'No AI provider configured');
     } catch (error) {
       if (error instanceof Error && error.message.includes('rate_limit')) {
         throw new AIRateLimitError();
       }
-      throw new ExternalServiceError('OpenAI', 'Failed to generate headline');
+      throw new ExternalServiceError('AI', 'Failed to generate headline');
     }
   }
 

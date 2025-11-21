@@ -1,14 +1,12 @@
 /**
- * Dashboard Layout
+ * Dashboard Layout - Professional Modern Design
  * 
- * Main layout for authenticated users with sidebar navigation
+ * Features: Glassmorphism, Gradient backgrounds, Smooth animations
  */
 
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
-import { LayoutDashboard, FolderOpen, Sparkles, CreditCard, BarChart3, Settings, LogOut } from 'lucide-react';
-import { UserButton } from '@clerk/nextjs';
+import DashboardSidebar from './components/DashboardSidebar';
 
 export default async function DashboardLayout({
   children,
@@ -22,62 +20,34 @@ export default async function DashboardLayout({
   }
 
   const navigation = [
-    { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Portfolios', href: '/dashboard/portfolios', icon: FolderOpen },
-    { name: 'AI Tools', href: '/dashboard/ai-tools', icon: Sparkles },
-    { name: 'NFC Cards', href: '/dashboard/nfc', icon: CreditCard },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+    { name: 'Overview', href: '/dashboard', icon: 'LayoutDashboard' },
+    { name: 'Portfolios', href: '/dashboard/portfolios', icon: 'FolderOpen' },
+    { name: 'AI Tools', href: '/dashboard/ai-tools', icon: 'Sparkles' },
+    { name: 'NFC Cards', href: '/dashboard/nfc', icon: 'CreditCard' },
+    { name: 'Analytics', href: '/dashboard/analytics', icon: 'BarChart3' },
+    { name: 'Settings', href: '/dashboard/settings', icon: 'Settings' },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">V</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900 dark:text-white">Velox</span>
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Animated Background Gradients */}
+      <div className="fixed inset-0 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] -z-10" />
+      <div className="fixed inset-0 bg-grid-pattern opacity-[0.03] -z-10" />
+      
+      {/* Animated Gradient Orbs */}
+      <div className="fixed top-0 -left-40 w-96 h-96 bg-[#06B6D4] rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-blob -z-10" />
+      <div className="fixed top-0 -right-40 w-96 h-96 bg-[#3B82F6] rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-blob animation-delay-2000 -z-10" />
+      <div className="fixed -bottom-40 left-1/2 w-96 h-96 bg-[#F59E0B] rounded-full mix-blend-multiply filter blur-[128px] opacity-10 animate-blob animation-delay-4000 -z-10" />
+
+      {/* Glassmorphism Sidebar */}
+      <DashboardSidebar navigation={navigation} />
+
+      {/* Main Content Area */}
+      <div className="lg:pl-72">
+        <main className="min-h-screen p-4 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {children}
           </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <item.icon className="w-5 h-5" />
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-
-          {/* User Profile */}
-          <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3">
-              <UserButton afterSignOutUrl="/" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  Dashboard
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Free Plan
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="pl-64">
-        <main className="py-8 px-8">
-          {children}
         </main>
       </div>
     </div>

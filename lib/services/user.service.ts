@@ -21,6 +21,7 @@ import {
   QuotaExceededError
 } from '@/lib/errors';
 import { getFeatureAccess } from '@/lib/auth';
+import { clerkClient } from '@clerk/nextjs/server';
 
 export interface IUserService {
   getUserById(id: string): Promise<User>;
@@ -30,6 +31,7 @@ export interface IUserService {
   updateUser(id: string, data: UpdateUserDTO): Promise<User>;
   deleteUser(id: string): Promise<void>;
   syncFromClerk(clerkId: string, clerkData: any): Promise<User>;
+  ensureUserExists(clerkId: string): Promise<User>;
   upgradeSubscription(userId: string, tier: SubscriptionTier): Promise<User>;
   checkQuota(userId: string, resource: 'portfolios' | 'nfcCards' | 'leads'): Promise<boolean>;
 }
@@ -174,6 +176,30 @@ export class UserService implements IUserService {
         ...userData,
       });
     }
+  }
+
+  /**
+   * Ensure user exists in database
+   * Fetches user from Clerk and creates if not exists
+   * Used at the start of authenticated API endpoints
+   */
+  async ensureUserExists(clerkId: string): Promise<User> {
+    try {
+      // Try to find existing user
+      const existingUser = await this.userRepository.findByClerkId(clerkId);
+      if (existingUser) {
+        return existingUser;
+      }
+    } catch (error) {
+      // User not found, fetch from Clerk and create
+    }
+
+    // Fetch user data from Clerk
+    const client = await clerkClient();
+    const clerkUser = await client.users.getUser(clerkId);
+    
+    // Sync to database
+    return await this.syncFromClerk(clerkId, clerkUser);
   }
 
   /**
