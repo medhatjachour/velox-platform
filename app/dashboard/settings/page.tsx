@@ -17,6 +17,7 @@ import {
   Check,
   Eye,
   EyeOff,
+  Download,
 } from "lucide-react"
 
 type SettingsTab =
