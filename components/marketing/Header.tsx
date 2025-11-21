@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ThemeToggle } from "./ThemeToggle";
+import { UserMenu } from "./UserMenu";
 import { User, LayoutDashboard, Sparkles, Menu } from "lucide-react";
 
 export default async function Header() {
@@ -80,13 +81,7 @@ export default async function Header() {
                   <LayoutDashboard className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                   Dashboard
                 </Link>
-                <Link
-                  href="/dashboard/settings"
-                  className="p-2.5 rounded-xl bg-gradient-to-br from-[#06B6D4]/10 to-[#3B82F6]/10 border border-[#06B6D4]/20 hover:border-[#06B6D4]/40 transition-all hover:scale-105"
-                  title={user.name || user.email}
-                >
-                  <User className="w-5 h-5 text-[#06B6D4]" />
-                </Link>
+                <UserMenu user={{ name: user.name, email: user.email, role: user.role }} />
               </div>
             ) : (
               /* Guest User */
