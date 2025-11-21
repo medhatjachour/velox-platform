@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Download,
   MessageSquare,
+  Mail,
 } from "lucide-react"
 
 type AITool =
