@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Github, 
@@ -42,6 +43,24 @@ interface PortfolioViewProps {
 export default function PortfolioView({ portfolio }: PortfolioViewProps) {
   const theme = portfolio.theme as any || {};
   const gradient = theme.gradient || "from-[#06B6D4] to-[#3B82F6]";
+  
+  // Track view on mount
+  useEffect(() => {
+    const trackView = async () => {
+      try {
+        await fetch("/api/analytics/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ portfolioId: portfolio.id }),
+        });
+      } catch (error) {
+        // Silently fail - don't block the UI
+        console.error("Failed to track view:", error);
+      }
+    };
+    
+    trackView();
+  }, [portfolio.id]);
 
   return (
     <div className="min-h-screen bg-background">

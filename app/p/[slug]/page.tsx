@@ -74,10 +74,6 @@ export default async function PublicPortfolioPage({ params }: PageProps) {
   if (!portfolio || !portfolio.isPublished) {
     notFound();
   }
-
-  // Track view asynchronously (don't await)
-  // In production, you might want to do this client-side or via an API route
-  // to avoid blocking the render
   
   return <PortfolioView portfolio={portfolio} />;
 }

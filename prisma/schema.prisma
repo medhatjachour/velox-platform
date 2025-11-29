@@ -141,10 +141,30 @@ model Portfolio {
   bio      String?
   headline String?
   
+  // Personal Info
+  email       String?
+  phone       String?
+  location    String?
+  linkedinUrl String?
+  githubUrl   String?
+  websiteUrl  String?
+  twitterUrl  String?
+  instagramUrl String?
+  youtubeUrl  String?
+  facebookUrl String?
+  
+  // Professional Details
+  currentRole      String?
+  company          String?
+  yearsOfExperience String?
+  services         Json?   // Array of services offered
+  interests        Json?   // Array of personal interests
+  
   // Customization
   theme         Json?
   customDomain  String?
   heroImageUrl  String?
+  avatarUrl     String?
   
   // SEO
   metaTitle       String?
@@ -160,13 +180,110 @@ model Portfolio {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team     Team?         @relation(fields: [teamId], references: [id])
-  projects Project[]
-  views    PortfolioView[]
-  leads    Lead[]
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team           Team?             @relation(fields: [teamId], references: [id])
+  projects       Project[]
+  experience     Experience[]
+  education      Education[]
+  skills         Skill[]
+  certifications Certification[]
+  testimonials   Testimonial[]
+  views          PortfolioView[]
+  leads          Lead[]
   
   @@map("portfolios")
+}
+
+model Experience {
+  id          String   @id @default(uuid())
+  portfolioId String
+  company     String
+  position    String
+  location    String?
+  startDate   String
+  endDate     String?
+  current     Boolean  @default(false)
+  description String
+  achievements String[]
+  order       Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  @@map("experience")
+}
+
+model Education {
+  id           String   @id @default(uuid())
+  portfolioId  String
+  institution  String
+  degree       String
+  field        String
+  location     String?
+  startDate    String
+  endDate      String?
+  gpa          String?
+  achievements String[]
+  order        Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  @@map("education")
+}
+
+model Skill {
+  id          String  @id @default(uuid())
+  portfolioId String
+  name        String
+  category    String  // technical, soft, language, tool
+  level       String? // beginner, intermediate, advanced, expert
+  order       Int     @default(0)
+  
+  createdAt DateTime @default(now())
+  
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  @@map("skills")
+}
+
+model Certification {
+  id          String  @id @default(uuid())
+  portfolioId String
+  name        String
+  issuer      String
+  date        String
+  expiryDate  String?
+  credentialUrl String?
+  order       Int     @default(0)
+  
+  createdAt DateTime @default(now())
+  
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  @@map("certifications")
+}
+
+model Testimonial {
+  id          String  @id @default(uuid())
+  portfolioId String
+  name        String
+  role        String
+  company     String?
+  content     String
+  avatarUrl   String?
+  rating      Int?    // 1-5 stars
+  order       Int     @default(0)
+  
+  createdAt DateTime @default(now())
+  
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  @@map("testimonials")
 }
 
 model Project {
@@ -176,8 +293,14 @@ model Project {
   description String
   imageUrl    String?
   url         String?
+  githubUrl   String?
+  demoUrl     String?
   technologies String[]
+  highlights  String[]
+  category    String?  // web, mobile, ai, data, etc
   featured    Boolean  @default(false)
+  startDate   String?
+  endDate     String?
   order       Int      @default(0)
   
   createdAt DateTime @default(now())

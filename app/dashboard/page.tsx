@@ -268,20 +268,11 @@ export default function DashboardPage() {
                   Share it with the world and start making connections
                 </p>
                 <div className="flex items-center gap-4">
-                  <Link href={`/p/${user.email.split("@")[0]}`}>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-3 bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
-                    >
-                      View Portfolio
-                    </motion.button>
-                  </Link>
                   <Link href="/dashboard/portfolio">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="px-6 py-3 bg-card border border-border text-foreground font-bold rounded-xl hover:border-[#06B6D4]/50 transition-all"
+                      className="px-6 py-3 bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
                     >
                       Edit Portfolio
                     </motion.button>

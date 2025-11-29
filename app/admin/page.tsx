@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   Users,
   DollarSign,
@@ -201,10 +202,12 @@ export default function AdminDashboard() {
         <Card className="p-6">
           <h2 className="text-2xl font-bold mb-6">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-auto py-6 flex-col gap-2">
-              <Users className="w-6 h-6" />
-              Manage Users
-            </Button>
+            <Link href="/admin/users">
+              <Button variant="outline" className="h-auto py-6 flex-col gap-2 w-full">
+                <Users className="w-6 h-6" />
+                Manage Users
+              </Button>
+            </Link>
             <Button variant="outline" className="h-auto py-6 flex-col gap-2">
               <Briefcase className="w-6 h-6" />
               View Portfolios

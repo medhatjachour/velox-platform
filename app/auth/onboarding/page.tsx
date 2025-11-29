@@ -76,7 +76,8 @@ export default function OnboardingPage() {
     setError("");
 
     try {
-      const response = await fetch("/api/auth/register", {
+      // Step 1: Register user
+      const registerResponse = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -88,10 +89,52 @@ export default function OnboardingPage() {
         }),
       });
 
-      const data = await response.json();
+      const registerData = await registerResponse.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Registration failed");
+      if (!registerResponse.ok) {
+        throw new Error(registerData.error || "Registration failed");
+      }
+
+      // Step 2: Login to get session
+      const loginResponse = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      if (!loginResponse.ok) {
+        throw new Error("Login after registration failed");
+      }
+
+      // Step 3: If CV was uploaded, parse it and create portfolio
+      if (formData.resumeFile) {
+        try {
+          const formDataObj = new FormData();
+          formDataObj.append("file", formData.resumeFile);
+
+          // Note: CV parsing endpoint would be /api/ai/parse-cv
+          // For now, create a basic portfolio
+          const portfolioResponse = await fetch("/api/portfolio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: `${formData.firstName} ${formData.lastName}`,
+              slug: formData.username,
+              headline: "Professional Portfolio",
+              bio: "Welcome to my portfolio! I'm excited to share my work with you.",
+            }),
+          });
+
+          if (!portfolioResponse.ok) {
+            console.error("Failed to create portfolio from CV");
+          }
+        } catch (cvError) {
+          console.error("CV processing error:", cvError);
+          // Don't fail the whole registration if CV processing fails
+        }
       }
 
       setStep(4);
