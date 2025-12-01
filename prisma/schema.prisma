@@ -159,12 +159,25 @@ model Portfolio {
   yearsOfExperience String?
   services         Json?   // Array of services offered
   interests        Json?   // Array of personal interests
+  cvData           Json?   // Parsed CV data for quick access (experience, education, certs, awards)
   
   // Customization
   theme         Json?
   customDomain  String?
   heroImageUrl  String?
   avatarUrl     String?
+  
+  // AI-Generated Portfolio
+  generatedHTML String?  @db.Text
+  metadata      Json?    // AI generation metadata (personality analysis, design choices, etc.)
+  
+  // Personality & Design Preferences
+  personality       Json?   // Array of personality traits
+  designPreferences Json?   // Color palettes, animations, 3D effects, complexity
+  goals             Json?   // Array of goals
+  targetAudience    Json?   // Array of target audience
+  favoriteColors    Json?   // Array of favorite colors
+  values            Json?   // Array of personal values
   
   // SEO
   metaTitle       String?

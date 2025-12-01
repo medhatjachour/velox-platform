@@ -50,13 +50,20 @@ export class AIService {
           model,
           temperature,
           max_tokens: maxTokens,
+          stream: false, // Explicitly disable streaming
         })
 
         const message = completion.choices[0]?.message
         const usage = completion.usage
+        const content = message?.content || ''
+
+        // Validate content is not corrupted
+        if (content.includes('\x00') || content.includes('\uFFFD') || /[\x00-\x08\x0B-\x0C\x0E-\x1F]/.test(content)) {
+          throw new Error('Received corrupted response from AI service')
+        }
 
         return {
-          content: message?.content || '',
+          content,
           model,
           tokensUsed: usage?.total_tokens || 0,
           finishReason: completion.choices[0]?.finish_reason || 'stop',

@@ -75,6 +75,17 @@ export default async function PublicPortfolioPage({ params }: PageProps) {
     notFound();
   }
   
+  // If portfolio has AI-generated HTML, serve it directly
+  if (portfolio.generatedHTML) {
+    return (
+      <div 
+        dangerouslySetInnerHTML={{ __html: portfolio.generatedHTML }}
+        suppressHydrationWarning
+      />
+    );
+  }
+  
+  // Fallback to default portfolio view
   return <PortfolioView portfolio={portfolio} />;
 }
 
